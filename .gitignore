@@ -30,8 +30,74 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# 🔒 CRITICAL SECURITY - Environment Variables & Secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.production
+*.env
+
+# 🔒 API Keys & Authentication
+auth.config.js
+auth.config.ts
+secrets/
+keys/
+*.key
+*.pem
+*.p12
+*.pfx
+
+# 🔒 Database & Backend Secrets
+convex/auth.config.js
+convex/auth.config.ts
+convex/_generated/
+.convex/
+
+# 🔒 Payment & Billing (Future: Stripe Integration)
+stripe-config.json
+billing/secrets/
+
+# 🔒 Email Service Keys
+resend-config.json
+sendgrid-config.json
+mailgun-config.json
+
+# 🔒 AI Service Keys
+openai-config.json
+openrouter-config.json
+anthropic-config.json
+
+# 🔒 Cloud Provider Secrets
+aws-config.json
+gcp-config.json
+azure-config.json
+
+# 🔒 OAuth & Social Login
+google-oauth.json
+github-oauth.json
+discord-oauth.json
+
+# 🔒 Production Configs
+docker-compose.prod.yml
+k8s-secrets.yml
+helm-values.prod.yml
+
+# 🔒 Logs with Sensitive Data
+*.log
+logs/
+/tmp/
+temp/
+
+# 🔒 User Data & Uploads (if stored locally)
+uploads/
+user-data/
+datasets/private/
+
+# 🔒 Business Intelligence
+analytics-config.json
+metrics/private/
 
 # vercel
 .vercel
@@ -39,3 +105,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 🔒 IDE & Editor Configs with Secrets
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# 🔒 Backup Files
+*.backup
+*.bak
+*.old
+
+# 🔒 Certificate Files
+*.crt
+*.cert
+*.ca-bundle
