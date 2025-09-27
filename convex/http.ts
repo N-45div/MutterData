@@ -120,8 +120,8 @@ http.route({
       console.log(`🔍 Received query: "${query}"`);
       console.log(`🔍 Tool call ID: ${toolCall.id}`);
 
-      // Get the most recent dataset from Convex
-      const datasets = await ctx.runQuery(api.files.listFiles);
+      // Get the most recent dataset from Convex for the current user
+      const datasets = await ctx.runQuery(api.files.listFiles, { userId: userId || undefined });
       
       if (!datasets || datasets.length === 0) {
         return new Response(JSON.stringify({
@@ -335,8 +335,15 @@ http.route({
       
       const { user_id } = toolCall.arguments;
 
-      // Get all datasets (since we're using the most recent one anyway)
-      const datasets = await ctx.runQuery(api.files.listFiles);
+      // Get the current user ID for dataset filtering
+      let userId = null;
+      const recentSessions = await ctx.runQuery(api.auth.getRecentActiveUser);
+      if (recentSessions) {
+        userId = recentSessions.userId;
+      }
+
+      // Get all datasets for the current user
+      const datasets = await ctx.runQuery(api.files.listFiles, { userId: userId || undefined });
       
       if (!datasets || datasets.length === 0) {
         return new Response(JSON.stringify({
@@ -400,8 +407,15 @@ http.route({
         user_id 
       } = toolCall.arguments || {};
 
-      // Get the latest dataset
-      const datasets = await ctx.runQuery(api.files.listFiles);
+      // Get the current user ID for dataset filtering
+      let currentUserId = null;
+      const recentSessions = await ctx.runQuery(api.auth.getRecentActiveUser);
+      if (recentSessions) {
+        currentUserId = recentSessions.userId;
+      }
+
+      // Get the latest dataset for the current user
+      const datasets = await ctx.runQuery(api.files.listFiles, { userId: currentUserId || undefined });
       
       if (!datasets || datasets.length === 0) {
         return new Response(JSON.stringify({
@@ -417,45 +431,37 @@ http.route({
 
       const dataset = datasets[0];
       
-      // Determine the target email address
+      // Determine the target email address using the same logic as analyze endpoint
       let targetEmail = email_address;
       let recipientDisplayName = recipient_name || "there";
       
-      // If no email_address provided, try multiple fallback strategies
+      // If no email_address provided, get the currently active user
       if (!email_address) {
-        // Strategy 1: Try to get from user_id if it exists
-        if (user_id) {
-          try {
-            const user = await ctx.runQuery(api.users.getUser, { userId: user_id });
-            if (user && user.email) {
-              targetEmail = user.email;
-              recipientDisplayName = user.name || user.email.split('@')[0];
+        // Get the most recent active user session (same as analyze endpoint)
+        const recentSessions = await ctx.runQuery(api.auth.getRecentActiveUser);
+        if (recentSessions) {
+          targetEmail = recentSessions.email;
+          recipientDisplayName = recentSessions.email.split('@')[0];
+          console.log(`🎯 Using recent active user email: ${targetEmail} for email analysis`);
+        } else {
+          // Fallback: Try to get from user_id if it exists
+          if (user_id) {
+            try {
+              const user = await ctx.runQuery(api.users.getUser, { userId: user_id });
+              if (user && user.email) {
+                targetEmail = user.email;
+                recipientDisplayName = user.name || user.email.split('@')[0];
+              }
+            } catch (error) {
+              console.log("Could not fetch user from users table");
             }
-          } catch (error) {
-            console.log("Could not fetch user from users table");
-          }
-          
-          // If user_id looks like an email, use it directly
-          if (!targetEmail && user_id.includes('@')) {
-            targetEmail = user_id;
-            recipientDisplayName = user_id.split('@')[0];
-            console.log(`Using user_id as email: ${targetEmail}`);
-          }
-        }
-        
-        // Strategy 2: Get the most recent user from the users table
-        if (!targetEmail) {
-          try {
-            const allUsers = await ctx.runQuery(api.users.listUsers);
-            if (allUsers && allUsers.length > 0) {
-              // Get the most recently created user
-              const recentUser = allUsers[allUsers.length - 1];
-              targetEmail = recentUser.email;
-              recipientDisplayName = recentUser.name || recentUser.email.split('@')[0];
-              console.log(`Using most recent user email: ${targetEmail}`);
+            
+            // If user_id looks like an email, use it directly
+            if (!targetEmail && user_id.includes('@')) {
+              targetEmail = user_id;
+              recipientDisplayName = user_id.split('@')[0];
+              console.log(`Using user_id as email: ${targetEmail}`);
             }
-          } catch (error) {
-            console.log("Could not fetch users list");
           }
         }
       }
@@ -564,7 +570,7 @@ http.route({
   method: "GET",
   handler: httpAction(async (ctx, request) => {
     try {
-      const datasets = await ctx.runQuery(api.files.listFiles);
+      const datasets = await ctx.runQuery(api.files.listFiles, {});
       return new Response(JSON.stringify({ 
         count: datasets?.length || 0,
         datasets: datasets || [],
@@ -668,7 +674,7 @@ http.route({
       let targetUserId = userId;
       
       if (!targetDatasetId) {
-        const datasets = await ctx.runQuery(api.files.listFiles);
+        const datasets = await ctx.runQuery(api.files.listFiles, {});
         if (datasets && datasets.length > 0) {
           targetDatasetId = datasets[0]._id;
           targetUserId = datasets[0].userId;

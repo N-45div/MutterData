@@ -117,14 +117,24 @@ export const saveDataset = mutation({
   },
 });
 
-// List all files (for Vapi integration)
+// List all files (for Vapi integration) - now user-specific
 export const listFiles = query({
-  args: {},
-  handler: async (ctx) => {
-    return await ctx.db
-      .query("datasets")
-      .order("desc")
-      .collect();
+  args: { userId: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    if (args.userId) {
+      // Return datasets for specific user
+      return await ctx.db
+        .query("datasets")
+        .filter((q) => q.eq(q.field("userId"), args.userId))
+        .order("desc")
+        .collect();
+    } else {
+      // Fallback: return all datasets (for backward compatibility)
+      return await ctx.db
+        .query("datasets")
+        .order("desc")
+        .collect();
+    }
   },
 });
 
