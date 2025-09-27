@@ -111,8 +111,6 @@ Built for the **Modern Stack Hackathon 2025** 🏆
 #### **☁️ Infrastructure & Deployment**
 - **Vercel** - Frontend deployment and hosting
 - **Convex Cloud** - Backend and database hosting
-- **GitHub Actions** - CI/CD automation
-- **Docker** - Containerization (Enterprise)
 
 ## 🏃‍♂️ Quick Start
 
@@ -391,4 +389,4 @@ Make sure to set all required environment variables in your deployment platform.
 
 ---
 
-**Built with ❤️ for the Modern Stack Hackathon 2024**
+**Built with ❤️ for the Modern Stack Hackathon 2025**

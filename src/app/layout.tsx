@@ -18,10 +18,32 @@ export const metadata: Metadata = {
   description: "Transform how you analyze data with voice commands. Upload Excel/CSV files and have natural conversations with your data.",
   keywords: ["voice analytics", "data visualization", "AI", "conversational BI", "Excel", "CSV"],
   authors: [{ name: "MutterData Team" }],
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/icon', type: 'image/png', sizes: '32x32' }
+    ],
+    shortcut: '/favicon.svg',
+    apple: '/icon',
+  },
   openGraph: {
     title: "MutterData - Voice-Controlled Data Analytics",
     description: "Transform how you analyze data with voice commands",
     type: "website",
+    images: [
+      {
+        url: '/icon',
+        width: 32,
+        height: 32,
+        alt: 'MutterData Logo',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary',
+    title: "MutterData - Voice-Controlled Data Analytics",
+    description: "Transform how you analyze data with voice commands",
+    images: ['/icon'],
   },
 };
 
