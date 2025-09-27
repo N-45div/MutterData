@@ -24,6 +24,9 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://typescriptlang.org)
 [![Next.js](https://img.shields.io/badge/Next.js-000000?logo=next.js&logoColor=white)](https://nextjs.org)
 [![Convex](https://img.shields.io/badge/Convex-FF6B6B?logo=convex&logoColor=white)](https://convex.dev)
+[![OpenAI](https://img.shields.io/badge/OpenAI-412991?logo=openai&logoColor=white)](https://openai.com)
+[![Vapi](https://img.shields.io/badge/Vapi-6366F1?logo=microphone&logoColor=white)](https://vapi.ai)
+[![Resend](https://img.shields.io/badge/Resend-000000?logo=resend&logoColor=white)](https://resend.com)
 
 
 Built for the **Modern Stack Hackathon 2025** 🏆
@@ -114,7 +117,7 @@ Built for the **Modern Stack Hackathon 2025** 🏆
 
 ### 1. **Clone & Install**
 ```bash
-git clone <repository-url>
+git clone https://github.com/N-45div/MutterData.git
 cd mutterdata
 npm install
 ```
@@ -148,8 +151,6 @@ NEXT_PUBLIC_CONVEX_URL=your_convex_url
 # Email Services
 RESEND_API_KEY=your_resend_api_key_here
 ```
-
-⚠️ **Security Note**: All environment variables are properly protected by `.gitignore`. See [SECURITY.md](./SECURITY.md) for complete security guidelines.
 
 ### 3. **Setup Convex**
 ```bash
@@ -324,26 +325,6 @@ graph TB
 
 ## 🔧 Development
 
-### **Project Structure**
-```
-src/
-├── app/                 # Next.js app router
-│   ├── dashboard/       # Main dashboard page
-│   └── page.tsx         # Landing page
-├── components/          # Reusable UI components
-│   ├── VoiceInterface.tsx
-│   └── ChartVisualization.tsx
-├── services/            # Business logic
-│   └── aiAnalytics.ts   # OpenAI integration
-└── utils/               # Utility functions
-    └── fileProcessor.ts # Excel/CSV processing
-
-convex/                  # Backend functions
-├── schema.ts           # Database schema
-├── datasets.ts         # Data management
-└── analytics.ts        # Analytics functions
-```
-
 ### **Available Scripts**
 ```bash
 npm run dev          # Start development server
@@ -398,51 +379,6 @@ vercel --prod
 ### **Environment Variables for Production**
 Make sure to set all required environment variables in your deployment platform.
 
-## 🛡️ Security & Compliance
-
-MutterData takes security seriously with enterprise-grade protection:
-
-- 🔒 **Environment Protection**: Comprehensive `.gitignore` prevents secret exposure
-- 🔐 **Authentication**: OAuth2 with Google, secure session management
-- 📧 **Data Encryption**: All data encrypted in transit and at rest
-- 🔍 **Security Monitoring**: Automated vulnerability scanning
-- 📋 **Compliance Ready**: GDPR, SOC 2, ISO 27001 preparation
-
-**Security Resources:**
-- [🛡️ Security Guidelines](./SECURITY.md)
-- [🔒 Environment Template](./env.example)
-- [📋 Business Model](./BUSINESS_MODEL.md)
-
-## 💼 Business Model
-
-MutterData uses a **hybrid open source + commercial** approach:
-
-### 🔓 **Open Source (MIT License)**
-- Core CSV/Excel analytics engine
-- Basic visualizations and statistics
-- Community plugins and templates
-- Developer SDK and CLI tools
-
-### 🔒 **Commercial Features**
-- 🎙️ **Voice Analytics**: Advanced voice recognition and processing
-- 🤖 **AI Insights**: Premium AI models and summarization
-- 📧 **Enterprise Communication**: Email reports, Slack integration
-- 🔐 **Security & Compliance**: SSO, RBAC, audit logging
-- ☁️ **Cloud & Scaling**: Multi-tenant, auto-scaling infrastructure
-
-**Current System:**
-- 🎯 **Credits-Based**: Internal credit system for usage tracking
-- 🔄 **Fair Usage**: Generous credit allocations for testing and development
-- 💳 **Future Pricing**: Payment tiers planned for production release
-- 🚀 **Hackathon Ready**: Full features available for demonstration
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
 
 ## 🏆 Hackathon Submission
 
