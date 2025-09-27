@@ -1,5 +1,213 @@
 // Email helper functions for MutterData
 
+// QuickChart API for generating chart images
+function generateChartUrl(chartConfig: any, width = 600, height = 400): string {
+  const baseUrl = 'https://quickchart.io/chart';
+  const encodedConfig = encodeURIComponent(JSON.stringify(chartConfig));
+  return `${baseUrl}?c=${encodedConfig}&width=${width}&height=${height}&devicePixelRatio=2`;
+}
+
+// Generate chart configurations from data analysis
+function generateChartsFromData(data: any[], columns: string[]): { chartUrl: string, title: string, description: string }[] {
+  const charts: { chartUrl: string, title: string, description: string }[] = [];
+  
+  if (!data || data.length === 0) return charts;
+  
+  // 1. Top 5 Values Chart (if we have numerical data)
+  const numericalColumns = columns.filter(col => {
+    const sampleValues = data.slice(0, 10).map(row => row[col]).filter(val => val != null);
+    return sampleValues.some(val => !isNaN(Number(val)) && val !== '');
+  });
+  
+  if (numericalColumns.length > 0) {
+    const topColumn = numericalColumns[0];
+    const topData = data
+      .filter(row => row[topColumn] != null && !isNaN(Number(row[topColumn])))
+      .sort((a, b) => Number(b[topColumn]) - Number(a[topColumn]))
+      .slice(0, 5);
+    
+    if (topData.length > 0) {
+      const labels = topData.map((row, index) => {
+        // Try to find a name/label column
+        const labelCol = columns.find(col => 
+          col.toLowerCase().includes('name') || 
+          col.toLowerCase().includes('product') || 
+          col.toLowerCase().includes('category') ||
+          col.toLowerCase().includes('title')
+        );
+        return labelCol ? String(row[labelCol]).slice(0, 15) : `Item ${index + 1}`;
+      });
+      
+      const values = topData.map(row => Number(row[topColumn]));
+      
+      const chartConfig = {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: topColumn,
+            data: values,
+            backgroundColor: ['#EA580C', '#FB923C', '#FED7AA', '#FDBA74', '#F97316'],
+            borderColor: '#EA580C',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: `Top 5 by ${topColumn}`,
+              font: { size: 16, weight: 'bold' }
+            },
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: '#E5E7EB' }
+            },
+            x: {
+              grid: { display: false }
+            }
+          }
+        }
+      };
+      
+      charts.push({
+        chartUrl: generateChartUrl(chartConfig),
+        title: `📊 Top 5 by ${topColumn}`,
+        description: `Highest performing items based on ${topColumn} values`
+      });
+    }
+  }
+  
+  // 2. Distribution Chart (if we have categorical data)
+  const categoricalColumns = columns.filter(col => {
+    const uniqueValues = [...new Set(data.map(row => row[col]).filter(val => val != null))];
+    return uniqueValues.length > 1 && uniqueValues.length <= 10;
+  });
+  
+  if (categoricalColumns.length > 0) {
+    const catColumn = categoricalColumns[0];
+    const distribution = data.reduce((acc, row) => {
+      const value = String(row[catColumn] || 'Unknown');
+      acc[value] = (acc[value] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const sortedEntries = Object.entries(distribution)
+      .sort(([,a], [,b]) => (b as number) - (a as number))
+      .slice(0, 6);
+    
+    if (sortedEntries.length > 1) {
+      const chartConfig = {
+        type: 'doughnut',
+        data: {
+          labels: sortedEntries.map(([label]) => String(label).slice(0, 12)),
+          datasets: [{
+            data: sortedEntries.map(([, count]) => count),
+            backgroundColor: [
+              '#EA580C', '#FB923C', '#FED7AA', '#FDBA74', '#F97316', '#C2410C'
+            ],
+            borderWidth: 2,
+            borderColor: '#FFFFFF'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: `${catColumn} Distribution`,
+              font: { size: 16, weight: 'bold' }
+            },
+            legend: {
+              position: 'right',
+              labels: { font: { size: 12 } }
+            }
+          }
+        }
+      };
+      
+      charts.push({
+        chartUrl: generateChartUrl(chartConfig),
+        title: `🥧 ${catColumn} Distribution`,
+        description: `Breakdown of data by ${catColumn} categories`
+      });
+    }
+  }
+  
+  // 3. Trend Chart (if we have date/time data)
+  const dateColumns = columns.filter(col => 
+    col.toLowerCase().includes('date') || 
+    col.toLowerCase().includes('time') ||
+    col.toLowerCase().includes('created') ||
+    col.toLowerCase().includes('updated')
+  );
+  
+  if (dateColumns.length > 0 && numericalColumns.length > 0) {
+    const dateCol = dateColumns[0];
+    const valueCol = numericalColumns[0];
+    
+    const trendData = data
+      .filter(row => row[dateCol] && row[valueCol] != null)
+      .map(row => ({
+        date: new Date(row[dateCol]),
+        value: Number(row[valueCol])
+      }))
+      .filter(item => !isNaN(item.date.getTime()) && !isNaN(item.value))
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+      .slice(0, 20);
+    
+    if (trendData.length > 2) {
+      const chartConfig = {
+        type: 'line',
+        data: {
+          labels: trendData.map(item => item.date.toLocaleDateString()),
+          datasets: [{
+            label: valueCol,
+            data: trendData.map(item => item.value),
+            borderColor: '#EA580C',
+            backgroundColor: 'rgba(234, 88, 12, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: `${valueCol} Trend Over Time`,
+              font: { size: 16, weight: 'bold' }
+            },
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: '#E5E7EB' }
+            },
+            x: {
+              grid: { display: false }
+            }
+          }
+        }
+      };
+      
+      charts.push({
+        chartUrl: generateChartUrl(chartConfig),
+        title: `📈 ${valueCol} Trend`,
+        description: `Time-based trend analysis of ${valueCol}`
+      });
+    }
+  }
+  
+  return charts;
+}
+
 interface FastAnalysisResult {
   insights: string[];
   patterns: string[];
@@ -35,6 +243,19 @@ export async function generateEmailAnalysis(
 
   if (hasRichMetadata && metadata.sheetNames && metadata.sheetNames.length > 1) {
     report += `\n• Multi-sheet Analysis: ${metadata.sheetNames.length} sheets (primary: ${metadata.sheetNames[0]})`;
+  }
+
+  // Generate charts from data
+  const charts = generateChartsFromData(data, dataset.columns);
+  
+  // Add charts section if we have charts
+  if (charts.length > 0) {
+    report += `\n\n📊 VISUAL INSIGHTS:`;
+    charts.forEach(chart => {
+      report += `\n\n${chart.title}`;
+      report += `\n${chart.description}`;
+      // Note: Chart images will be embedded in HTML email
+    });
   }
 
   // Add Mastra AI Summary if available
@@ -503,19 +724,81 @@ export async function sendAnalysisEmail(params: {
     const { Resend } = await import('resend');
     const resend = new Resend(process.env.RESEND_API_KEY);
 
+    // Generate charts for email
+    const charts = generateChartsFromData(params.dataset.data || [], params.dataset.columns || []);
+    
+    // Create charts HTML section
+    const chartsHtml = charts.length > 0 ? `
+      <div style="margin: 30px 0;">
+        <h2 style="color: #EA580C; font-size: 24px; margin-bottom: 20px;">📊 Visual Insights</h2>
+        ${charts.map(chart => `
+          <div style="margin: 25px 0; padding: 20px; background: #FFF7ED; border-radius: 12px; border-left: 4px solid #EA580C;">
+            <h3 style="color: #EA580C; font-size: 18px; margin: 0 0 10px 0;">${chart.title}</h3>
+            <p style="color: #7C2D12; margin: 0 0 15px 0; font-size: 14px;">${chart.description}</p>
+            <div style="text-align: center; margin: 20px 0;">
+              <img src="${chart.chartUrl}" alt="${chart.title}" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" />
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    ` : '';
+
     const { data, error } = await resend.emails.send({
       from: 'MutterData <onboarding@resend.dev>',
       to: [params.to],
       subject: `📊 ${params.analysisType} Analysis: ${params.dataset.fileName}`,
       html: `
-        <h1>🎤 MutterData Analysis</h1>
-        <p>Hi ${params.recipientName}!</p>
-        <p>Your ${params.analysisType} analysis is ready:</p>
-        <div style="background: #f5f5f5; padding: 20px; border-radius: 8px;">
-          <pre>${params.analysis}</pre>
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 800px; margin: 0 auto; background: #FFFFFF;">
+          <!-- Header -->
+          <div style="background: linear-gradient(135deg, #EA580C 0%, #FB923C 100%); padding: 30px; text-align: center; border-radius: 12px 12px 0 0;">
+            <h1 style="color: white; font-size: 28px; margin: 0; font-weight: bold;">🎤 MutterData Analysis</h1>
+            <p style="color: #FED7AA; margin: 10px 0 0 0; font-size: 16px;">Voice-First Data Analytics Platform</p>
+          </div>
+          
+          <!-- Content -->
+          <div style="padding: 30px;">
+            <p style="font-size: 18px; color: #374151; margin: 0 0 20px 0;">Hi ${params.recipientName}!</p>
+            <p style="font-size: 16px; color: #6B7280; margin: 0 0 30px 0;">Your ${params.analysisType} analysis is ready with comprehensive insights and visual charts:</p>
+            
+            <!-- Dataset Info -->
+            <div style="background: #F9FAFB; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #EA580C;">
+              <h3 style="color: #EA580C; margin: 0 0 10px 0; font-size: 18px;">📁 Dataset Information</h3>
+              <p style="margin: 5px 0; color: #374151;"><strong>File:</strong> ${params.dataset.fileName}</p>
+              <p style="margin: 5px 0; color: #374151;"><strong>Records:</strong> ${params.dataset.rowCount?.toLocaleString() || 'N/A'} rows</p>
+              <p style="margin: 5px 0; color: #374151;"><strong>Columns:</strong> ${params.dataset.columnCount || 'N/A'} dimensions</p>
+            </div>
+
+            ${chartsHtml}
+            
+            <!-- Analysis Report -->
+            <div style="background: #F8F9FA; padding: 25px; border-radius: 8px; margin: 30px 0;">
+              <h2 style="color: #EA580C; font-size: 22px; margin: 0 0 20px 0;">📋 Detailed Analysis Report</h2>
+              <div style="background: white; padding: 20px; border-radius: 6px; border: 1px solid #E5E7EB;">
+                <pre style="white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; color: #374151; margin: 0;">${params.analysis}</pre>
+              </div>
+            </div>
+            
+            <!-- Call to Action -->
+            <div style="text-align: center; margin: 40px 0;">
+              <a href="https://mutterdata-8d8w72dbs-n45divs-projects.vercel.app/dashboard" 
+                 style="background: linear-gradient(135deg, #EA580C 0%, #FB923C 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 4px 6px rgba(234, 88, 12, 0.3);">
+                🚀 Continue Analysis in MutterData
+              </a>
+            </div>
+            
+            <!-- Voice Commands Tip -->
+            <div style="background: #FFF7ED; padding: 20px; border-radius: 8px; margin: 30px 0; border: 1px solid #FED7AA;">
+              <h3 style="color: #EA580C; margin: 0 0 10px 0; font-size: 16px;">🎙️ Voice Analytics Tip</h3>
+              <p style="color: #7C2D12; margin: 0; font-size: 14px;">Try saying: <em>"Show me trends in [column name]"</em> or <em>"What are the top performing items?"</em> to explore your data further!</p>
+            </div>
+          </div>
+          
+          <!-- Footer -->
+          <div style="background: #F9FAFB; padding: 20px; text-align: center; border-radius: 0 0 12px 12px; border-top: 1px solid #E5E7EB;">
+            <p style="color: #6B7280; font-size: 12px; margin: 0;">Generated by MutterData AI Analytics Engine | Voice-First Business Intelligence</p>
+            <p style="color: #9CA3AF; font-size: 11px; margin: 5px 0 0 0;">Transform how you analyze data with voice commands</p>
+          </div>
         </div>
-        <p>Dataset: ${params.dataset.fileName} (${params.dataset.rowCount} rows)</p>
-        <a href="http://localhost:3000/dashboard">Continue Analysis</a>
       `,
     });
 

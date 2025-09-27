@@ -89,13 +89,12 @@ Built for the **Modern Stack Hackathon 2025** 🏆
 - **OpenAI GPT-4** - Advanced AI analysis and insights
 - **OpenRouter** - Multi-model AI access (GPT, Claude, Gemini)
 - **Vapi.ai** - Voice AI platform for speech recognition
-- **ElevenLabs** - High-quality text-to-speech
-- **Deepgram** - Real-time speech-to-text
+
 
 #### **📧 Communication & Notifications**
 - **Resend** - Modern email delivery service
 - **Email Templates** - AI-generated reports and insights
-- **Slack Integration** - Team notifications (Enterprise)
+
 
 #### **💳 Usage & Credits**
 - **Credits System** - Internal usage tracking and management
