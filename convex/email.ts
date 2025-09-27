@@ -780,7 +780,7 @@ export async function sendAnalysisEmail(params: {
             
             <!-- Call to Action -->
             <div style="text-align: center; margin: 40px 0;">
-              <a href="https://mutterdata-8d8w72dbs-n45divs-projects.vercel.app/dashboard" 
+              <a href="https://mutterdata.com/dashboard" 
                  style="background: linear-gradient(135deg, #EA580C 0%, #FB923C 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 4px 6px rgba(234, 88, 12, 0.3);">
                 🚀 Continue Analysis in MutterData
               </a>
