@@ -24,6 +24,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://typescriptlang.org)
 [![Next.js](https://img.shields.io/badge/Next.js-000000?logo=next.js&logoColor=white)](https://nextjs.org)
 [![Convex](https://img.shields.io/badge/Convex-FF6B6B?logo=convex&logoColor=white)](https://convex.dev)
+[![Better Auth](https://img.shields.io/badge/Better_Auth-000000?logo=auth0&logoColor=white)](https://better-auth.com)
 [![OpenAI](https://img.shields.io/badge/OpenAI-412991?logo=openai&logoColor=white)](https://openai.com)
 [![Vapi](https://img.shields.io/badge/Vapi-6366F1?logo=microphone&logoColor=white)](https://vapi.ai)
 [![Resend](https://img.shields.io/badge/Resend-000000?logo=resend&logoColor=white)](https://resend.com)
@@ -295,14 +296,14 @@ graph TB
     CONVEX --> VERCEL
     UI --> GITHUB
 
-    %% Styling
-    classDef frontend fill:#e1f5fe
-    classDef backend fill:#f3e5f5
-    classDef ai fill:#fff3e0
-    classDef communication fill:#e8f5e8
-    classDef payment fill:#fce4ec
-    classDef data fill:#f1f8e9
-    classDef external fill:#fafafa
+    %% Black and White Styling
+    classDef frontend fill:#f8f9fa,stroke:#343a40,stroke-width:2px,color:#000
+    classDef backend fill:#e9ecef,stroke:#495057,stroke-width:2px,color:#000
+    classDef ai fill:#ffffff,stroke:#000000,stroke-width:3px,color:#000
+    classDef communication fill:#f1f3f4,stroke:#5f6368,stroke-width:2px,color:#000
+    classDef payment fill:#f8f9fa,stroke:#6c757d,stroke-width:2px,color:#000
+    classDef data fill:#ffffff,stroke:#343a40,stroke-width:2px,color:#000
+    classDef external fill:#e9ecef,stroke:#6c757d,stroke-width:1px,color:#000
 
     class UI,VOICE,CHARTS,AUTH frontend
     class CONVEX,HTTP,PIPELINE,CREDITS backend
