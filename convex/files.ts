@@ -122,10 +122,20 @@ export const listFiles = query({
   args: { userId: v.optional(v.string()) },
   handler: async (ctx, args) => {
     if (args.userId) {
-      // Return datasets for specific user
+      // Extract raw email from user_email format if needed
+      const rawEmail = args.userId.startsWith('user_') 
+        ? args.userId.substring(5) // Remove 'user_' prefix
+        : args.userId;
+      
+      // Return datasets for specific user (check both formats)
       return await ctx.db
         .query("datasets")
-        .filter((q) => q.eq(q.field("userId"), args.userId))
+        .filter((q) => 
+          q.or(
+            q.eq(q.field("userId"), args.userId),     // user_email@domain.com
+            q.eq(q.field("userId"), rawEmail)         // email@domain.com
+          )
+        )
         .order("desc")
         .collect();
     } else {

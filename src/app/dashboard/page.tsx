@@ -39,13 +39,15 @@ export default function Dashboard() {
   const saveDataset = useMutation(api.files.saveDataset);
   const createUserSession = useMutation(api.auth.createUserSession);
   
-  // Real-time dataset fetching
-  const datasets = useQuery(api.files.listFiles);
-  const [selectedDatasetId, setSelectedDatasetId] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  
   // Credits data - Use real user ID from session
   const userId = session?.user?.email ? `user_${session.user.email}` : null;
+  
+  // Real-time dataset fetching - only for current user
+  const datasets = useQuery(api.files.listFiles, 
+    userId ? { userId } : "skip"
+  );
+  const [selectedDatasetId, setSelectedDatasetId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const userCredits = useQuery(api.credits.getUserCredits, 
     userId ? { userId } : "skip"
   );

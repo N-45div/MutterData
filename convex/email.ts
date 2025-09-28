@@ -721,8 +721,15 @@ export async function sendAnalysisEmail(params: {
   analysisType: string;
 }): Promise<{ success: boolean; error?: string }> {
   try {
+    if (!process.env.RESEND_API_KEY) {
+      console.error('❌ RESEND_API_KEY not found in environment variables');
+      return { success: false, error: 'Email service not configured' };
+    }
+    
     const { Resend } = await import('resend');
     const resend = new Resend(process.env.RESEND_API_KEY);
+    
+    console.log(`📧 Attempting to send email to: ${params.to}`);
 
     // Generate charts for email
     const charts = generateChartsFromData(params.dataset.data || [], params.dataset.columns || []);
@@ -744,7 +751,7 @@ export async function sendAnalysisEmail(params: {
     ` : '';
 
     const { data, error } = await resend.emails.send({
-      from: 'MutterData <onboarding@resend.dev>',
+      from: 'MutterData <reports.mutterdata.com>',
       to: [params.to],
       subject: `📊 ${params.analysisType} Analysis: ${params.dataset.fileName}`,
       html: `
@@ -803,11 +810,14 @@ export async function sendAnalysisEmail(params: {
     });
 
     if (error) {
+      console.error('Resend API error:', error);
       return { success: false, error: error.message };
     }
 
+    console.log('✅ Email sent successfully to:', params.to);
     return { success: true };
   } catch (error) {
-    return { success: false, error: 'Email failed' };
+    console.error('Email sending failed:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Email failed' };
   }
 }

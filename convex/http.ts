@@ -121,7 +121,18 @@ http.route({
       console.log(`🔍 Tool call ID: ${toolCall.id}`);
 
       // Get the most recent dataset from Convex for the current user
-      const datasets = await ctx.runQuery(api.files.listFiles, { userId: userId || undefined });
+      let datasets = await ctx.runQuery(api.files.listFiles, { userId: userId || undefined });
+      
+      // If no datasets found for current user, try getting all datasets as fallback
+      if (!datasets || datasets.length === 0) {
+        console.log(`🔍 No datasets found for user ${userId}, trying all datasets as fallback`);
+        datasets = await ctx.runQuery(api.files.listFiles, {});
+      }
+      
+      console.log(`🔍 Found ${datasets?.length || 0} datasets. User: ${userId}`);
+      if (datasets && datasets.length > 0) {
+        console.log(`🔍 Available datasets: ${datasets.map(d => `${d.fileName} (user: ${d.userId})`).join(', ')}`);
+      }
       
       if (!datasets || datasets.length === 0) {
         return new Response(JSON.stringify({
@@ -135,41 +146,48 @@ http.route({
         });
       }
       
-      // Use the most relevant dataset based on query context
-      let dataset = datasets[0]; // Default to most recent
+      // DYNAMIC DATASET SELECTION - Production Ready
+      let dataset = datasets[0]; // Default to most recent upload
       
-      // Smart dataset selection based on query keywords and context
       const queryLower = query.toLowerCase();
       
-      // First priority: Explicit dataset type mentions
-      if (queryLower.includes('lead') || queryLower.includes('prospect') || queryLower.includes('deal')) {
-        const leadsDataset = datasets.find(d => d.fileName.toLowerCase().includes('lead'));
-        if (leadsDataset) dataset = leadsDataset;
-      } else if (queryLower.includes('student') || queryLower.includes('grade') || queryLower.includes('mark')) {
-        const studentDataset = datasets.find(d => d.fileName.toLowerCase().includes('student') || d.fileName.toLowerCase().includes('mark'));
-        if (studentDataset) dataset = studentDataset;
-      } else if (queryLower.includes('sales') || queryLower.includes('revenue')) {
-        const salesDataset = datasets.find(d => d.fileName.toLowerCase().includes('sales') || d.fileName.toLowerCase().includes('revenue'));
-        if (salesDataset) dataset = salesDataset;
-      } 
-      // Second priority: "Latest" queries - prefer the most business-relevant dataset
-      else if (queryLower.includes('latest') || queryLower.includes('uploaded') || queryLower.includes('recent') || queryLower.includes('new')) {
-        // Prioritize business datasets over academic ones for "latest" queries
-        const leadsDataset = datasets.find(d => d.fileName.toLowerCase().includes('lead'));
-        const salesDataset = datasets.find(d => d.fileName.toLowerCase().includes('sales'));
-        const customerDataset = datasets.find(d => d.fileName.toLowerCase().includes('customer'));
-        
-        if (leadsDataset) {
-          dataset = leadsDataset;
-          console.log(`🎯 Using leads dataset for "latest" query`);
-        } else if (salesDataset) {
-          dataset = salesDataset;
-          console.log(`🎯 Using sales dataset for "latest" query`);
-        } else if (customerDataset) {
-          dataset = customerDataset;
-          console.log(`🎯 Using customer dataset for "latest" query`);
+      // Only override default if query explicitly mentions a dataset by name or contains specific keywords
+      if (queryLower.includes('dataset') && queryLower.includes('name:')) {
+        // Handle explicit dataset name: "analyze dataset name:products.csv"
+        const nameMatch = queryLower.match(/name:\s*([^\s]+)/);
+        if (nameMatch) {
+          const requestedName = nameMatch[1];
+          const namedDataset = datasets.find(d => d.fileName.toLowerCase().includes(requestedName.toLowerCase()));
+          if (namedDataset) {
+            dataset = namedDataset;
+            console.log(`🎯 Using explicitly requested dataset: ${dataset.fileName}`);
+          }
         }
-        // Otherwise use the default (most recent)
+      } else {
+        // Dynamic keyword matching - check if query contains words that match dataset filenames
+        const queryWords = queryLower.split(/\s+/);
+        let bestMatch = null;
+        let maxMatches = 0;
+        
+        for (const ds of datasets) {
+          const fileNameWords = ds.fileName.toLowerCase().replace(/[._-]/g, ' ').split(/\s+/);
+          const matches = queryWords.filter((word: string) => 
+            word.length > 2 && fileNameWords.some((fname: string) => fname.includes(word) || word.includes(fname))
+          ).length;
+          
+          if (matches > maxMatches) {
+            maxMatches = matches;
+            bestMatch = ds;
+          }
+        }
+        
+        // Only use matched dataset if there's a strong correlation (at least 1 keyword match)
+        if (bestMatch && maxMatches > 0) {
+          dataset = bestMatch;
+          console.log(`🎯 Dynamic match: "${query}" → ${dataset.fileName} (${maxMatches} keyword matches)`);
+        } else {
+          console.log(`🎯 Using most recent dataset: ${dataset.fileName} (no specific keywords found)`);
+        }
       }
       
       console.log(`🎯 Selected dataset: ${dataset.fileName} for query: "${query}"`);
@@ -415,7 +433,18 @@ http.route({
       }
 
       // Get the latest dataset for the current user
-      const datasets = await ctx.runQuery(api.files.listFiles, { userId: currentUserId || undefined });
+      let datasets = await ctx.runQuery(api.files.listFiles, { userId: currentUserId || undefined });
+      
+      // If no datasets found for current user, try getting all datasets as fallback
+      if (!datasets || datasets.length === 0) {
+        console.log(`🔍 Email: No datasets found for user ${currentUserId}, trying all datasets as fallback`);
+        datasets = await ctx.runQuery(api.files.listFiles, {});
+      }
+      
+      console.log(`🔍 Email: Found ${datasets?.length || 0} datasets. User: ${currentUserId}`);
+      if (datasets && datasets.length > 0) {
+        console.log(`🔍 Email: Available datasets: ${datasets.map(d => `${d.fileName} (user: ${d.userId})`).join(', ')}`);
+      }
       
       if (!datasets || datasets.length === 0) {
         return new Response(JSON.stringify({
@@ -440,8 +469,11 @@ http.route({
         // Get the most recent active user session (same as analyze endpoint)
         const recentSessions = await ctx.runQuery(api.auth.getRecentActiveUser);
         if (recentSessions) {
+          // recentSessions.email is already the raw email (e.g., "divij383@gmail.com")
+          // recentSessions.userId is the prefixed version (e.g., "user_divij383@gmail.com")
           targetEmail = recentSessions.email;
           recipientDisplayName = recentSessions.email.split('@')[0];
+          
           console.log(`🎯 Using recent active user email: ${targetEmail} for email analysis`);
         } else {
           // Fallback: Try to get from user_id if it exists
